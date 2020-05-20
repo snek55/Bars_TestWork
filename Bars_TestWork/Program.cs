@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Extensions.Configuration;
 
 namespace Bars_TestWork
@@ -10,8 +9,10 @@ namespace Bars_TestWork
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("configFile.json")
                 .Build();
-
             var connectionString = configuration["ConnectionString"];
+            var sizes = new DbWorker(connectionString).GetSizes();
+
+            while (true)
         }
     }
 }

@@ -1,4 +1,6 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Bars_TestWork
 {
@@ -9,10 +11,29 @@ namespace Bars_TestWork
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("configFile.json")
                 .Build();
-            var connectionString = configuration["ConnectionString"];
-            var sizes = new DbWorker(connectionString).GetSizes();
+            var connectStrToServers = configuration
+                .GetSection("ConnectionStrings")
+                .GetChildren()
+                .ToArray()
+                .Select(cs => cs.Value)
+                .ToArray();
+            var dbList = new List<DataBaseModel>(connectStrToServers.Length);
+
+            for (int i = 0; i < connectStrToServers.Length; i++)
+            {
+                var serverModels = new DbWorker(connectStrToServers[i]).GetDbServerModels();
+
+                foreach (var serverModel in serverModels)
+                {
+                    serverModel.ServerName = $"Server{i}";
+                    dbList.Add(serverModel);
+                }
+            }
 
             while (true)
+            {
+                //TODO: timeout
+            }
         }
     }
 }

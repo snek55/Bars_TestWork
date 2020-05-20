@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using Microsoft.Extensions.Configuration;
 
 namespace Bars_TestWork
 {
@@ -6,7 +7,11 @@ namespace Bars_TestWork
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("configFile.json")
+                .Build();
+
+            var connectionString = configuration["ConnectionString"];
         }
     }
 }

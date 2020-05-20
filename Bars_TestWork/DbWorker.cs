@@ -14,9 +14,9 @@ namespace Bars_TestWork
                 _connectionString = connectionString;
         }
 
-        public Dictionary<string, double> GetSizes()
+        public List<DataBaseModel> GetDbServerModels()
         {
-            var dictionary = new Dictionary<string, double>();
+            var models = new List<DataBaseModel>();
 
             using (var con = new NpgsqlConnection(_connectionString))
             {
@@ -32,12 +32,15 @@ namespace Bars_TestWork
                     {
                         var size = Int32.Parse(reader[1].ToString());
                         var sizeGb = size * 1e-9;
-                        dictionary.Add(reader[0].ToString(), sizeGb);
+                        var model = new DataBaseModel
+                            {DataBaseName = reader[0].ToString(), Size = sizeGb, UpdateTime = DateTime.UtcNow};
+                        
+                        models.Add(model);
                     }
                 }
             }
 
-            return dictionary;
+            return models;
         }
     }
 }

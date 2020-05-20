@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -18,6 +18,17 @@ namespace Bars_TestWork
                 .Select(cs => cs.Value)
                 .ToArray();
             var dbList = new List<DataBaseModel>(connectStrToServers.Length);
+
+            for (int i = 0; i < connectStrToServers.Length; i++)
+            {
+                var serverModels = new DbWorker(connectStrToServers[i]).GetDbServerModels();
+
+                foreach (var serverModel in serverModels)
+                {
+                    serverModel.ServerName = $"Server{i}";
+                    dbList.Add(serverModel);
+                }
+            }
 
             while (true)
             {

@@ -12,7 +12,7 @@ namespace Bars_TestWork
                 .AddJsonFile("configFile.json")
                 .Build();
             var connectStrToServers = configuration
-                .GetSection("ConnectionStrings")
+                .GetSection("DbConnectionStrings")
                 .GetChildren()
                 .ToArray()
                 .Select(cs => cs.Value)

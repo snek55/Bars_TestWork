@@ -1,11 +1,16 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Bars_TestWork
 {
     class Program
     {
+        private const string ConfigFile = "configFile.json";
+        private const int SleepTime = 1000;
         private static string[] _connectionStrings;
         private static string[] _diskSizes;
 
@@ -29,15 +34,25 @@ namespace Bars_TestWork
                         return;
                     }
 
-            for (int i = 0; i < connectStrToServers.Length; i++)
-            {
-                var serverModels = new DbWorker(connectStrToServers[i]).GetDbServerModels();
+                    Console.WriteLine("Starting update");
 
-                foreach (var serverModel in serverModels)
-                {
-                    serverModel.ServerName = $"Server{i}";
-                    dbList.Add(serverModel);
-                }
+                    for (int i = 0; i < _connectionStrings.Length; i++)
+                    {
+                        var serverModels = new DbWorker(_connectionStrings[i]).GetDbServerModels();
+
+                        foreach (var serverModel in serverModels)
+                        {
+                            serverModel.ServerName = $"Server{i + 1}";
+                            serverModel.DiscSize = _diskSizes[i];
+                        }
+
+                        dbList.Add(serverModels);
+                    }
+
+                    new GoogleSheetWorker(ConfigFile).Update(dbList);
+
+                    Console.WriteLine($"Waiting {SleepTime / 1000} seconds");
+                    Thread.Sleep(SleepTime);
                 }
             });
 

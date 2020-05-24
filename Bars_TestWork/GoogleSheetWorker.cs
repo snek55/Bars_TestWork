@@ -52,21 +52,8 @@ namespace Bars_TestWork
             return googleKey;
         }
 
-        public void Update(List<IList<DataBaseModel>> data)
+        void PrepareSheet(List<IList<DataBaseModel>> data)
         {
-            var googleKey = GetGoogleKey();
-            var credential = GoogleCredential.FromJson(googleKey).CreateScoped(_scopes);
-            var header = new List<object>
-            {
-                "Сервер", "База данных", "Размер в ГБ", "Дата обновления"
-            };
-            var dataToWrite = new List<IList<object>>();
-
-            _sheetsService = new SheetsService(new BaseClientService.Initializer
-            {
-                HttpClientInitializer = credential,
-                ApplicationName = AplicationName
-            });
             var sheetsCount = GetSheetsCount();
 
             if (sheetsCount < data.Count)
@@ -88,6 +75,10 @@ namespace Bars_TestWork
                 }
             }
         }
+
+        public void FormatingAndSendData(List<IList<DataBaseModel>> data)
+        {
+            PrepareSheet(data);
 
             for (int i = 0; i < data.Count; i++)
             {

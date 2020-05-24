@@ -1,4 +1,3 @@
-using System;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
@@ -73,25 +72,27 @@ namespace Bars_TestWork
             if (sheetsCount < data.Count)
             {
                 var sheetsName = GetSheetsName();
-                var iteratot = 1;
+                var iterator = 1;
 
-                while(sheetsCount < data.Count)
+                while (sheetsCount < data.Count)
                 {
-                    var hasName = sheetsName.FirstOrDefault(s => s.Equals($"Sheet{iteratot}")) != null;
+                    var notHasName = sheetsName.FirstOrDefault(s => s.Equals($"Sheet{iterator}")) == null;
 
-                    if (!hasName)
+                    if (notHasName)
                     {
-                        CreateNewSheet($"Sheet{iteratot}");
+                        CreateNewSheet($"Sheet{iterator}");
                         sheetsCount++;
                     }
 
-                    iteratot++;
+                    iterator++;
                 }
             }
+        }
 
             for (int i = 0; i < data.Count; i++)
             {
-                dataToWrite.Add(header);
+                var dataToWrite = new List<IList<object>>();
+                dataToWrite.Add(_header);
 
                 for (int j = 0; j < data[i].Count; j++)
                 {
@@ -146,7 +147,7 @@ namespace Bars_TestWork
 
             batchUpdateRequest.Execute();
         }
-        
+
         void UpdateEntry(string range, List<IList<object>> objects)
         {
             var valueRange = new ValueRange { Values = objects };

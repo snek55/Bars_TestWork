@@ -1,10 +1,11 @@
-﻿using Npgsql;
+using Npgsql;
 using System;
 using System.Collections.Generic;
+using Bars_TestWork.Interface;
 
 namespace Bars_TestWork
 {
-    public class DbWorker
+    public class DbWorker : IDbWorker
     {
         private readonly string _connectionString;
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
@@ -8,11 +8,11 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
+using Bars_TestWork.Interface;
 
 namespace Bars_TestWork
 {
-    public class GoogleSheetWorker
+    public class GoogleSheetWorker : IGoogleSheetWorker
     {
         private readonly string _configFile;
         private readonly string[] _scopes = { SheetsService.Scope.Spreadsheets };

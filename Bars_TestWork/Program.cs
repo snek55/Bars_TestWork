@@ -19,7 +19,15 @@ namespace Bars_TestWork
 
             Console.WriteLine("Press \"Esc\" to exit.\n");
 
-            var dbList = new List<DataBaseModel>(connectStrToServers.Length);
+            Task infinitySycle = new Task(() =>
+            {
+                while (true)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        Console.WriteLine("Завершение программы");
+                        return;
+                    }
 
             for (int i = 0; i < connectStrToServers.Length; i++)
             {
@@ -30,12 +38,21 @@ namespace Bars_TestWork
                     serverModel.ServerName = $"Server{i}";
                     dbList.Add(serverModel);
                 }
-            }
+                }
+            });
 
-            while (true)
+            infinitySycle.Start();
+
+            do
             {
-                //TODO: timeout
-            }
+                if (Console.ReadKey().Key != ConsoleKey.Escape)
+                {
+                    cancellationTokenSource.Cancel();
+                    Thread.Sleep(100);
+                }
+            } while (Console.ReadKey().Key != ConsoleKey.Escape);
+        }
+
         private static void InitConfigVariables()
         {
             var configuration = new ConfigurationBuilder()

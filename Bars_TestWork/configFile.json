@@ -1,0 +1,7 @@
+{
+  "DbConnectionStrings": [
+    "host=localhost;port=5432;Username=postgres;Password=0000;"
+  ],
+  "GoogleSheetKey": {
+  }
+}

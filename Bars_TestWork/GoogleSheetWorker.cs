@@ -1,5 +1,4 @@
-﻿using System;
-using Google.Apis.Auth.OAuth2;
+﻿using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
@@ -8,14 +7,15 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
+using Bars_TestWork.Interface;
 
 namespace Bars_TestWork
 {
-    public class GoogleSheetWorker
+    public class GoogleSheetWorker : IGoogleSheetWorker
     {
         private readonly string _configFile;
         private readonly string[] _scopes = { SheetsService.Scope.Spreadsheets };
+        private readonly List<object> _header;
         private const string AplicationName = "test";
         private const string SpreadSheetId = "1GsID9YFwg0ozFe9uehrdgE9zDPVBiVaeq0_RHY4X5X0";
         private SheetsService _sheetsService;
@@ -23,6 +23,18 @@ namespace Bars_TestWork
         public GoogleSheetWorker(string configFile)
         {
             _configFile = configFile;
+            var googleKey = GetGoogleKey();
+            var credential = GoogleCredential.FromJson(googleKey).CreateScoped(_scopes);
+
+            _header = new List<object>
+            {
+                "Сервер", "База данных", "Размер в ГБ", "Дата обновления"
+            };
+            _sheetsService = new SheetsService(new BaseClientService.Initializer
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = AplicationName
+            });
         }
 
         private string GetGoogleKey()
@@ -40,45 +52,38 @@ namespace Bars_TestWork
             return googleKey;
         }
 
-        public void Update(List<IList<DataBaseModel>> data)
+        void PrepareSheet(List<IList<DataBaseModel>> data)
         {
-            var googleKey = GetGoogleKey();
-            var credential = GoogleCredential.FromJson(googleKey).CreateScoped(_scopes);
-            var header = new List<object>
-            {
-                "Сервер", "База данных", "Размер в ГБ", "Дата обновления"
-            };
-            var dataToWrite = new List<IList<object>>();
-
-            _sheetsService = new SheetsService(new BaseClientService.Initializer
-            {
-                HttpClientInitializer = credential,
-                ApplicationName = AplicationName
-            });
             var sheetsCount = GetSheetsCount();
 
             if (sheetsCount < data.Count)
             {
                 var sheetsName = GetSheetsName();
-                var iteratot = 1;
+                var iterator = 1;
 
-                while(sheetsCount < data.Count)
+                while (sheetsCount < data.Count)
                 {
-                    var hasName = sheetsName.FirstOrDefault(s => s.Equals($"Sheet{iteratot}")) != null;
+                    var notHasName = sheetsName.FirstOrDefault(s => s.Equals($"Sheet{iterator}")) == null;
 
-                    if (!hasName)
+                    if (notHasName)
                     {
-                        CreateNewSheet($"Sheet{iteratot}");
+                        CreateNewSheet($"Sheet{iterator}");
                         sheetsCount++;
                     }
 
-                    iteratot++;
+                    iterator++;
                 }
             }
+        }
+
+        public void FormatingAndSendData(List<IList<DataBaseModel>> data)
+        {
+            PrepareSheet(data);
 
             for (int i = 0; i < data.Count; i++)
             {
-                dataToWrite.Add(header);
+                var dataToWrite = new List<IList<object>>();
+                dataToWrite.Add(_header);
 
                 for (int j = 0; j < data[i].Count; j++)
                 {
@@ -133,7 +138,7 @@ namespace Bars_TestWork
 
             batchUpdateRequest.Execute();
         }
-        
+
         void UpdateEntry(string range, List<IList<object>> objects)
         {
             var valueRange = new ValueRange { Values = objects };

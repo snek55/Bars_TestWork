@@ -1,10 +1,11 @@
 ﻿using Npgsql;
 using System;
 using System.Collections.Generic;
+using Bars_TestWork.Interface;
 
 namespace Bars_TestWork
 {
-    public class DbWorker
+    public class DbWorker : IDbWorker
     {
         private readonly string _connectionString;
 
@@ -34,7 +35,11 @@ namespace Bars_TestWork
                     var size = Int32.Parse(reader[1].ToString());
                     var sizeGb = Math.Round(size * 1e-9, 2, MidpointRounding.AwayFromZero);
                     var model = new DataBaseModel
-                    { DataBaseName = reader[0].ToString(), Size = sizeGb, UpdateTime = DateTime.UtcNow.Date };
+                    {
+                        DataBaseName = reader[0].ToString(), 
+                        Size = sizeGb, 
+                        UpdateTime = DateTime.UtcNow.Date
+                    };
 
                     models.Add(model);
                 }

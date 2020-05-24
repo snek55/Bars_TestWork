@@ -20,52 +20,49 @@ namespace Bars_TestWork
 
             var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
-            var dbList = new List<IList<DataBaseModel>>(_connectionStrings.Length);
 
             Console.WriteLine("Press \"Esc\" to exit.\n");
 
-            Task infinitySycle = new Task(() =>
+            Task.Run(AsyncWork, cancellationToken);
+
+            while (true)
             {
-                while (true)
-                {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        Console.WriteLine("Завершение программы");
-                        return;
-                    }
-
-                    Console.WriteLine("Starting update");
-
-                    for (int i = 0; i < _connectionStrings.Length; i++)
-                    {
-                        var serverModels = new DbWorker(_connectionStrings[i]).GetDbServerModels();
-
-                        foreach (var serverModel in serverModels)
-                        {
-                            serverModel.ServerName = $"Server{i + 1}";
-                            serverModel.DiscSize = _diskSizes[i];
-                        }
-
-                        dbList.Add(serverModels);
-                    }
-
-                    new GoogleSheetWorker(ConfigFile).Update(dbList);
-
-                    Console.WriteLine($"Waiting {SleepTime / 1000} seconds");
-                    Thread.Sleep(SleepTime);
-                }
-            });
-
-            infinitySycle.Start();
-
-            do
-            {
-                if (Console.ReadKey().Key != ConsoleKey.Escape)
+                if (Console.ReadKey().Key == ConsoleKey.Escape)
                 {
                     cancellationTokenSource.Cancel();
                     Thread.Sleep(100);
+                    break;
                 }
-            } while (Console.ReadKey().Key != ConsoleKey.Escape);
+            }
+        }
+
+        private static async Task AsyncWork()
+        {
+            var dbList = new List<IList<DataBaseModel>>(_connectionStrings.Length);
+
+            while (true)
+            {
+                Console.WriteLine("Starting update");
+
+                for (int i = 0; i < _connectionStrings.Length; i++)
+                {
+                    var serverModels = new DbWorker(_connectionStrings[i]).GetDbServerModels();
+
+                    foreach (var serverModel in serverModels)
+                    {
+                        serverModel.ServerName = $"Server{i + 1}";
+                        serverModel.DiscSize = _diskSizes[i];
+                    }
+
+                    dbList.Add(serverModels);
+                }
+
+                new GoogleSheetWorker(ConfigFile).FormatingAndSendData(dbList);
+                dbList = new List<IList<DataBaseModel>>();
+
+                Console.WriteLine($"Waiting {SleepTime / 1000} seconds");
+                await Task.Delay(SleepTime);
+            }
         }
 
         private static void InitConfigVariables()

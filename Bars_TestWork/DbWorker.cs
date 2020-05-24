@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Npgsql;
+using System;
 using System.Collections.Generic;
-using Npgsql;
 
 namespace Bars_TestWork
 {
@@ -18,25 +18,25 @@ namespace Bars_TestWork
         {
             var models = new List<DataBaseModel>();
 
-            using (var con = new NpgsqlConnection(_connectionString))
+            using var con = new NpgsqlConnection(_connectionString);
+            con.Open();
+
+            var sql = "SELECT pg_database.datname as \"database_name\", " +
+                      "pg_database_size(pg_database.datname) as size " +
+                      "FROM pg_database";
+
+            using var cmd = new NpgsqlCommand(sql, con);
+
+            using (var reader = cmd.ExecuteReader())
             {
-                var sql = "SELECT pg_database.datname as \"database_name\", " +
-                          "pg_database_size(pg_database.datname) as size " +
-                          "FROM pg_database";
-
-                using var cmd = new NpgsqlCommand(sql, con);
-
-                using (var reader = cmd.ExecuteReader())
+                while (reader.Read())
                 {
-                    while (reader.Read())
-                    {
-                        var size = Int32.Parse(reader[1].ToString());
-                        var sizeGb = size * 1e-9;
-                        var model = new DataBaseModel
-                            {DataBaseName = reader[0].ToString(), Size = sizeGb, UpdateTime = DateTime.UtcNow};
-                        
-                        models.Add(model);
-                    }
+                    var size = Int32.Parse(reader[1].ToString());
+                    var sizeGb = Math.Round(size * 1e-9, 2, MidpointRounding.AwayFromZero);
+                    var model = new DataBaseModel
+                    { DataBaseName = reader[0].ToString(), Size = sizeGb, UpdateTime = DateTime.UtcNow.Date };
+
+                    models.Add(model);
                 }
             }
 

@@ -1,39 +1,88 @@
 ﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Bars_TestWork
 {
     class Program
     {
+        private const string ConfigFile = "configFile.json";
+        private const int SleepTime = 1000;
+        private static string[] _connectionStrings;
+        private static string[] _diskSizes;
+
         static void Main(string[] args)
         {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("configFile.json")
-                .Build();
-            var connectStrToServers = configuration
-                .GetSection("ConnectionStrings")
-                .GetChildren()
-                .ToArray()
-                .Select(cs => cs.Value)
-                .ToArray();
-            var dbList = new List<DataBaseModel>(connectStrToServers.Length);
+            InitConfigVariables();
 
-            for (int i = 0; i < connectStrToServers.Length; i++)
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+            var dbList = new List<IList<DataBaseModel>>(_connectionStrings.Length);
+
+            Console.WriteLine("Press \"Esc\" to exit.\n");
+
+            Task infinitySycle = new Task(() =>
             {
-                var serverModels = new DbWorker(connectStrToServers[i]).GetDbServerModels();
-
-                foreach (var serverModel in serverModels)
+                while (true)
                 {
-                    serverModel.ServerName = $"Server{i}";
-                    dbList.Add(serverModel);
-                }
-            }
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        Console.WriteLine("Завершение программы");
+                        return;
+                    }
 
-            while (true)
+                    Console.WriteLine("Starting update");
+
+                    for (int i = 0; i < _connectionStrings.Length; i++)
+                    {
+                        var serverModels = new DbWorker(_connectionStrings[i]).GetDbServerModels();
+
+                        foreach (var serverModel in serverModels)
+                        {
+                            serverModel.ServerName = $"Server{i + 1}";
+                            serverModel.DiscSize = _diskSizes[i];
+                        }
+
+                        dbList.Add(serverModels);
+                    }
+
+                    new GoogleSheetWorker(ConfigFile).Update(dbList);
+
+                    Console.WriteLine($"Waiting {SleepTime / 1000} seconds");
+                    Thread.Sleep(SleepTime);
+                }
+            });
+
+            infinitySycle.Start();
+
+            do
             {
-                //TODO: timeout
-            }
+                if (Console.ReadKey().Key != ConsoleKey.Escape)
+                {
+                    cancellationTokenSource.Cancel();
+                    Thread.Sleep(100);
+                }
+            } while (Console.ReadKey().Key != ConsoleKey.Escape);
+        }
+
+        private static void InitConfigVariables()
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile(ConfigFile)
+                .Build();
+            _connectionStrings = configuration
+                .GetSection("Servers")
+                .GetChildren()
+                .Select(s => s.GetSection("ConnectionString").Value)
+                .ToArray();
+            _diskSizes = configuration
+                .GetSection("Servers")
+                .GetChildren()
+                .Select(s => s.GetSection("DiskSize").Value)
+                .ToArray();
         }
     }
 }

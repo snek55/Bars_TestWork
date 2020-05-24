@@ -16,6 +16,7 @@ namespace Bars_TestWork
     {
         private readonly string _configFile;
         private readonly string[] _scopes = { SheetsService.Scope.Spreadsheets };
+        private readonly List<object> _header;
         private const string AplicationName = "test";
         private const string SpreadSheetId = "1GsID9YFwg0ozFe9uehrdgE9zDPVBiVaeq0_RHY4X5X0";
         private SheetsService _sheetsService;
@@ -23,6 +24,18 @@ namespace Bars_TestWork
         public GoogleSheetWorker(string configFile)
         {
             _configFile = configFile;
+            var googleKey = GetGoogleKey();
+            var credential = GoogleCredential.FromJson(googleKey).CreateScoped(_scopes);
+
+            _header = new List<object>
+            {
+                "Сервер", "База данных", "Размер в ГБ", "Дата обновления"
+            };
+            _sheetsService = new SheetsService(new BaseClientService.Initializer
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = AplicationName
+            });
         }
 
         private string GetGoogleKey()

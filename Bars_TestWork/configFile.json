@@ -1,6 +1,9 @@
 {
-  "DbConnectionStrings": [
-    "host=localhost;port=5432;Username=postgres;Password=0000;"
+  "Servers": [
+    {
+      "ConnectionString": "host=localhost;port=5432;Username=postgres;Password=0000;",
+      "DiskSize": 60
+    }
   ],
   "GoogleSheetKey": {
   }

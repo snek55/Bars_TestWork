@@ -1,9 +1,12 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Bars_TestWork
 {
@@ -39,6 +42,7 @@ namespace Bars_TestWork
         private static async Task AsyncWork()
         {
             var dbList = new List<IList<DataBaseModel>>(_connectionStrings.Length);
+            var goggleKeyString = GetRawJsonString("GoogleSheetKey");
 
             while (true)
             {
@@ -57,7 +61,7 @@ namespace Bars_TestWork
                     dbList.Add(serverModels);
                 }
 
-                new GoogleSheetWorker(ConfigFile).FormatingAndSendData(dbList);
+                new GoogleSheetWorker(goggleKeyString).FormatingAndSendData(dbList);
                 dbList = new List<IList<DataBaseModel>>();
 
                 Console.WriteLine($"Waiting {SleepTime / 1000} seconds");
@@ -80,6 +84,20 @@ namespace Bars_TestWork
                 .GetChildren()
                 .Select(s => s.GetSection("DiskSize").Value)
                 .ToArray();
+        }
+        private static string GetRawJsonString(string sectionName)
+        {
+            string jsonString;
+
+            using (var streamReader = new StreamReader(ConfigFile))
+            {
+                var jsonTextReader = new JsonTextReader(streamReader);
+                var jObject = JObject.Load(jsonTextReader);
+
+                jsonString = jObject.GetValue(sectionName).ToString();
+            }
+
+            return jsonString;
         }
     }
 }

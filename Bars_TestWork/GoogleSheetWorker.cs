@@ -1,30 +1,28 @@
-﻿using Google.Apis.Auth.OAuth2;
+using Bars_TestWork.Interface;
+using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using Bars_TestWork.Interface;
 
 namespace Bars_TestWork
 {
     public class GoogleSheetWorker : IGoogleSheetWorker
     {
-        private readonly string _configFile;
         private readonly string[] _scopes = { SheetsService.Scope.Spreadsheets };
         private readonly List<object> _header;
         private const string AplicationName = "test";
         private const string SpreadSheetId = "1GsID9YFwg0ozFe9uehrdgE9zDPVBiVaeq0_RHY4X5X0";
         private SheetsService _sheetsService;
 
-        public GoogleSheetWorker(string configFile)
+        /// <summary>
+        public GoogleSheetWorker(string googleKeyString)
         {
-            _configFile = configFile;
-            var googleKey = GetGoogleKey();
-            var credential = GoogleCredential.FromJson(googleKey).CreateScoped(_scopes);
+            if(string.IsNullOrWhiteSpace(googleKeyString))
+                return;
+
+            var credential = GoogleCredential.FromJson(googleKeyString).CreateScoped(_scopes);
 
             _header = new List<object>
             {
@@ -37,31 +35,17 @@ namespace Bars_TestWork
             });
         }
 
-        private string GetGoogleKey()
+        /// <summary>
+        void PrepareSheet(in int count)
         {
-            string googleKey;
+            var sheetsName = GetSheetsName();
+            var sheetsCount = sheetsName.Length;
 
-            using (var streamReader = new StreamReader(_configFile))
+            if (sheetsCount < count)
             {
-                var jsonTextReader = new JsonTextReader(streamReader);
-                var jObject = JObject.Load(jsonTextReader);
-
-                googleKey = jObject.GetValue("GoogleSheetKey").ToString();
-            }
-
-            return googleKey;
-        }
-
-        void PrepareSheet(List<IList<DataBaseModel>> data)
-        {
-            var sheetsCount = GetSheetsCount();
-
-            if (sheetsCount < data.Count)
-            {
-                var sheetsName = GetSheetsName();
                 var iterator = 1;
 
-                while (sheetsCount < data.Count)
+                while (sheetsCount < count)
                 {
                     var notHasName = sheetsName.FirstOrDefault(s => s.Equals($"Sheet{iterator}")) == null;
 
@@ -78,7 +62,7 @@ namespace Bars_TestWork
 
         public void FormatingAndSendData(List<IList<DataBaseModel>> data)
         {
-            PrepareSheet(data);
+            PrepareSheet(data.Count);
 
             for (int i = 0; i < data.Count; i++)
             {
@@ -112,14 +96,11 @@ namespace Bars_TestWork
             return sheetsId;
         }
 
-        int GetSheetsCount()
-        {
-            var spreadSheets = _sheetsService.Spreadsheets.Get(SpreadSheetId).Execute();
-            var sheetsId = spreadSheets.Sheets.Select(s => s.Properties.SheetId).ToArray().Length;
-
-            return sheetsId;
-        }
-
+        /// <summary>
+        /// Метод создания дового листа в текущем документе. В текущем методе заполняются необходимыполя
+        /// и отправляется запрос.
+        /// </summary>
+        /// <param name="sheetName">Имя листа который следует создать</param>
         void CreateNewSheet(string sheetName)
         {
             var addSheetRequest = new AddSheetRequest();
@@ -139,9 +120,10 @@ namespace Bars_TestWork
             batchUpdateRequest.Execute();
         }
 
-        void UpdateEntry(string range, List<IList<object>> objects)
+        /// <summary>
+        void UpdateEntry(string range, List<IList<object>> data)
         {
-            var valueRange = new ValueRange { Values = objects };
+            var valueRange = new ValueRange { Values = data };
 
             var updateRequest = _sheetsService.Spreadsheets.Values.Update(valueRange, SpreadSheetId, range);
             updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;

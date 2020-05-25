@@ -8,6 +8,9 @@ using System.Linq;
 
 namespace Bars_TestWork
 {
+    /// <summary>
+    /// Класс по работе с Google таблицы.
+    /// </summary>
     public class GoogleSheetWorker : IGoogleSheetWorker
     {
         private readonly string[] _scopes = { SheetsService.Scope.Spreadsheets };
@@ -17,6 +20,9 @@ namespace Bars_TestWork
         private SheetsService _sheetsService;
 
         /// <summary>
+        /// Конструктор в котором инициализируются объект главного класса по работе с таблицами google.
+        /// </summary>
+        /// <param name="googleKeyString">Json строка с Google ключев для работы с Api.</param>
         public GoogleSheetWorker(string googleKeyString)
         {
             if(string.IsNullOrWhiteSpace(googleKeyString))
@@ -36,6 +42,10 @@ namespace Bars_TestWork
         }
 
         /// <summary>
+        /// Метод по созданию недостающих листов в таблице.
+        /// Имя нового листа имеет формат "Sheet{number}".
+        /// </summary>
+        /// <param name="count">Количество листов в документе</param>
         void PrepareSheet(in int count)
         {
             var sheetsName = GetSheetsName();
@@ -60,6 +70,11 @@ namespace Bars_TestWork
             }
         }
 
+        /// <summary>
+        /// Входной метод который приводит DataBaseModel к типу object, к данным добавляется заголовки
+        /// столбцов и финальная строка. Сформированные данные отправляются в таблицу. 
+        /// </summary>
+        /// <param name="data">Данные для записи в таблицу</param>
         public void FormatingAndSendData(List<IList<DataBaseModel>> data)
         {
             PrepareSheet(data.Count);
@@ -88,6 +103,10 @@ namespace Bars_TestWork
             }
         }
 
+        /// <summary>
+        /// Метод получающий список страниц данного документа.
+        /// </summary>
+        /// <returns>Возврат массив имен листов документа</returns>
         string[] GetSheetsName()
         {
             var spreadSheets = _sheetsService.Spreadsheets.Get(SpreadSheetId).Execute();
@@ -97,7 +116,7 @@ namespace Bars_TestWork
         }
 
         /// <summary>
-        /// Метод создания дового листа в текущем документе. В текущем методе заполняются необходимыполя
+        /// Метод создания нового листа в текущем документе. В текущем методе заполняются необходимыполя
         /// и отправляется запрос.
         /// </summary>
         /// <param name="sheetName">Имя листа который следует создать</param>
@@ -121,6 +140,10 @@ namespace Bars_TestWork
         }
 
         /// <summary>
+        /// Метод отвечающий за обновление ячеек в документе
+        /// </summary>
+        /// <param name="range">Строка в котором передается лист и ячейки для изменения</param>
+        /// <param name="data">Данные которые следует внести в ячейки</param>
         void UpdateEntry(string range, List<IList<object>> data)
         {
             var valueRange = new ValueRange { Values = data };

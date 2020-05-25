@@ -13,6 +13,8 @@ namespace Bars_TestWork
     /// <summary>
     /// Основной класс программы. Управляет основными функциями приложения,
     /// а также считывает настройки конфиг файла.
+    /// Таблица с которой работала программа на момент тесторования
+    /// https://docs.google.com/spreadsheets/d/1GsID9YFwg0ozFe9uehrdgE9zDPVBiVaeq0_RHY4X5X0/edit#gid=0
     /// </summary>
     class Program
     {
